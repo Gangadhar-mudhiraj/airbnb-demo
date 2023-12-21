@@ -43,6 +43,11 @@ const sessionOptions = {
   },
 };
 
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', 'https://project-1zuj.onrender.com');
+  // Add other headers as needed
+  next();
+});
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
