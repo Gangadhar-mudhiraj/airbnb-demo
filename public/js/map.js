@@ -1,4 +1,8 @@
 mapboxgl.accessToken = mapToken;
+mapboxgl.setRTLTextPlugin(
+  'https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-supported/v0.2.0/mapbox-gl-supported.js'
+);
+
 const map = new mapboxgl.Map({
   container: "map",
   style: "mapbox://styles/mapbox/streets-v12",
