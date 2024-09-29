@@ -33,22 +33,49 @@ module.exports.showListing = async (req, res) => {
 };
 
 module.exports.createNewListing = async (req, res, next) => {
-  let response = await geoCodingClient
-    .forwardGeocode({
-      query: req.body.listing.location,
-      limit: 1,
-    })
-    .send();
+  let response;
+  let geometry = {}; // Initialize empty geometry object
+
+  try {
+    // Try to perform geocoding
+    response = await geoCodingClient
+      .forwardGeocode({
+        query: req.body.listing.location, // Get location from form
+        limit: 1,
+      })
+      .send();
+
+    if (response.body.features.length) {
+      // If a valid location is found, extract the geometry
+      geometry = response.body.features[0].geometry;
+    } else {
+      // If no location is found, notify the user but proceed with saving the listing
+      req.flash("error", "Invalid location, but listing will still be saved.");
+    }
+  } catch (e) {
+    // If geocoding or authentication fails, flash an error but proceed
+    req.flash("error", "Geocoding failed. Listing will be saved without location data.");
+  }
+
+  // Process image upload
   let url = req.file.path;
   let filename = req.file.filename;
+
+  // Create the new listing with form data
   const newListing = new Listing(req.body.listing);
-  newListing.owner = req.user._id;
+  newListing.owner = req.user._id; // Associate the listing with the logged-in user
   newListing.image = { url, filename };
-  newListing.geometry = response.body.features[0].geometry;
-  await newListing.save();
-  req.flash("success", "New listing added");
-  res.redirect("/listings");
+  
+  // Only save geometry if geocoding was successful, otherwise leave it empty
+  newListing.geometry = geometry;
+
+  await newListing.save(); // Save the listing to the database
+
+  req.flash("success", "New listing added"); // Notify user of success
+  res.redirect("/listings"); // Redirect to listings page
 };
+
+
 
 module.exports.renderEdit = async (req, res) => {
   let { id } = req.params;
